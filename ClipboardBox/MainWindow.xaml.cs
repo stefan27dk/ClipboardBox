@@ -15,6 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Forms;
+using System.Windows.Interop;
+
 namespace ClipboardBox
 {
     /// <summary>
@@ -28,17 +30,98 @@ namespace ClipboardBox
 
             MouseHook.Start();
             MouseHook.MouseAction += new EventHandler(Event);
+            window.Topmost = true;
         }
 
 
         // Mouse Click Event
         private void Event(object sender, EventArgs e) 
-        { /*EvaluateCaretPosition();*/ Show_Window(); }
+        { /*EvaluateCaretPosition();*/ /*Show_Window();*/ }
 
 
 
 
-       
+
+
+
+
+
+
+
+
+        // Register HotKey-----------------------::START::------------------------------------------------------------------>  
+
+
+
+
+    
+
+
+        // Dll import for registering HotKeys
+
+        // Registering HotKeys --------------------------------------------------------------
+        [DllImport("user32.dll")]
+        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
+        [DllImport("user32.dll")]
+        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+        const int MYACTION_HOTKEY_ID = 1; // Hotkey ID
+
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            HwndSource source = PresentationSource.FromVisual(this) as HwndSource;
+            source.AddHook(WndProc);
+            RegisterShortcut();
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // Handle messages...
+            if (msg == 0x0312 && wParam.ToInt32() == MYACTION_HOTKEY_ID)
+            {
+                //// Create only One Form
+                //if (Selection_Screenshot == null)
+                //{
+                //    Selection_Screenshot = new SelectionScreenshot_Form4();
+                //}
+
+                //// SHOW Screenshot Form
+                //if (Selection_Screenshot.Visible == false)  // If Form is not visible open it
+                //{
+                //    Selection_Screenshot = new SelectionScreenshot_Form4();
+                //    Selection_Screenshot.Show();
+                //}
+                Show_Window();
+            }
+                return IntPtr.Zero;
+        }
+
+
+               
+
+        // Register Shortcut - Method
+        private void RegisterShortcut()
+        {
+            HwndSource source = PresentationSource.FromVisual(this) as HwndSource;
+
+            // Modifier keys codes: Alt = 1, Ctrl = 2, Shift = 4, Win = 8
+            // Compute the addition of each combination of the keys you want to be pressed
+            // ALT+CTRL = 1 + 2 = 3 , CTRL+SHIFT = 2 + 4 = 6...
+            RegisterHotKey(source.Handle, MYACTION_HOTKEY_ID, 6, (int)Keys.V);
+        }
+
+        // Register HotKey-----------------------::END::------------------------------------------------------------------<    
+
+
+
+
+
+
+
+
+
+
 
         //private void GetMousePosition()
         //{
@@ -77,6 +160,25 @@ namespace ClipboardBox
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -160,6 +262,8 @@ public static class MouseHook
         public IntPtr dwExtraInfo;
     }
 
+
+    // Global  Mouse Event ------------------------------------------------------------
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int idHook,
       LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
@@ -175,4 +279,6 @@ public static class MouseHook
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern IntPtr GetModuleHandle(string lpModuleName);
 
+
+  
 }
